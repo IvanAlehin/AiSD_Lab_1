@@ -9,6 +9,14 @@
 using namespace std;
 
 namespace polynomial {
+	template<typename T>
+	bool operator >=(const std::complex<T>& a, const std::complex<T>& b) {
+		return std::abs(a) >= std::abs(b);
+	}
+	template<typename T>
+	bool operator <(const std::complex<T>& a, const std::complex<T>& b) {
+		return std::abs(a) < std::abs(b);
+	}
 
 	template<typename T>
 	class Polynomial {
@@ -102,10 +110,11 @@ namespace polynomial {
 	T Polynomial<T>::compute(T arg) {
 		T sum=0;
 		for (int i = 0; i < _coefficients.get_size(); ++i) {
-			sum += _coefficients[i]* pow(arg, i);
+			sum += _coefficients[i]* static_cast<T>(pow(arg, i));
 		}
 		return sum;
 	}
+	
 
 	template<typename T>
 	Polynomial<T> Polynomial<T>::operator+=(const Polynomial<T>& other) {
@@ -225,5 +234,17 @@ namespace polynomial {
 		return *this;
 	}
 
+	template <typename T>
+	Polynomial<T> derivative(Polynomial<T>& other) {
+		int new_size = other.get_coefficients().get_size()-1;
+		Polynomial<T> result(new_size);
+
+		for (int i = 0; i < new_size ; i++) {
+			result.get_coefficients()[i] = other.get_coefficients()[i + 1] * static_cast<T>(i + 1);
+		}
+		return result;
 	}
+	
+	
+}
 #endif
