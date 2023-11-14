@@ -3,6 +3,7 @@
 
 #include <Vector.cpp>
 #include <stdexcept>
+#include <complex>
 #include <cmath>
 #include <iostream>
 using namespace std;
@@ -26,7 +27,8 @@ namespace polynomial {
 		Polynomial<T> operator+(const Polynomial<T>& other)const;
 		Polynomial<T> operator-=(const Polynomial<T>& other);
 		Polynomial<T> operator-(const Polynomial<T>& other)const;
-		Polynomial<T> operator*(const T& scalar) const;
+		Polynomial<T> operator*(T scalar) const;
+		Polynomial<T>& operator=(Polynomial<T> other);
 
 		T& operator[](int level);
 		T operator[](int level) const;
@@ -38,6 +40,29 @@ namespace polynomial {
 		Polynomial<T> expand(int level);
 
 		~Polynomial() = default;
+
+		friend std::ostream& operator<<(std::ostream& out, const Polynomial<T>& polynomial) {
+			int new_size = polynomial._coefficients.get_size() - 1;
+
+			for (int i = new_size; i >= 0; --i) {
+				T coefficient = polynomial[i];
+				if (i < new_size) {
+					if (coefficient >= T(0)) {
+						out << " +";
+					}
+					if (coefficient < T(0)) {
+						out << " ";
+					}
+				}
+				if (i > 0) {
+					out << coefficient << "x^" << i;
+				}
+				else {
+					out << coefficient;
+				}
+			}
+			return out;
+		};
 	};
 
 	template<typename T>
@@ -63,17 +88,21 @@ namespace polynomial {
 
 	template<typename T>
 	Polynomial<T> Polynomial<T>::set(T coefficient, int level) {
-		if (level < 0 || level > _coefficients.get_size()) { throw runtime_error("Invalid level"); }
-		if (coefficient == 0) { return *this; }
+		if (level < 0 ) { throw runtime_error("Invalid level"); }
+		if (level > _coefficients.get_size()){
+			expand(level);
+			_coefficients[level - 1] = coefficient;
+			return *this;
+		}
 		_coefficients[level] = coefficient;
 		return *this;
 	}
 
 	template<typename T>
 	T Polynomial<T>::compute(T arg) {
-		T sum;
+		T sum=0;
 		for (int i = 0; i < _coefficients.get_size(); ++i) {
-			sum += _coefficients[i] * pow(arg, i);
+			sum += _coefficients[i]* pow(arg, i);
 		}
 		return sum;
 	}
@@ -121,10 +150,18 @@ namespace polynomial {
 	}
 
 	template<typename T>
-	Polynomial<T> Polynomial<T>::operator*(const T& scalar) const {
+	Polynomial<T> Polynomial<T>::operator*(T scalar) const {
 		Polynomial<T> result = *this;
 		for (int i = 0; i < result._coefficients.get_size(); ++i) {
 			result._coefficients[i] = result._coefficients[i] * scalar;
+		}
+		return result;
+	}
+	template<typename T>
+	Polynomial<T> operator*(T scalar, Polynomial<T>& other) {
+		Polynomial<T> result = other;
+		for (int i = 0; i < other.get_coefficients().get_size(); ++i) {
+			result.get_coefficients()[i] = scalar * other.get_coefficients()[i];
 		}
 		return result;
 	}
@@ -173,6 +210,12 @@ namespace polynomial {
 	}
 
 	template<typename T>
+		Polynomial<T>& Polynomial<T>::operator=(Polynomial<T> other) {
+			std::swap(_coefficients, other._coefficients);
+			return *this;
+	}
+
+	template<typename T>
 	Polynomial<T> Polynomial<T>::expand(int level) {
 		Polynomial<T> temp(level);
 		for (int i = 0; i < _coefficients.get_size(); ++i) {
@@ -181,6 +224,6 @@ namespace polynomial {
 		_coefficients = temp.get_coefficients();
 		return *this;
 	}
-	
-}
+
+	}
 #endif
